@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desafío Excel - CEA Puerto Quijarro</title>
+
+    <style>
+        :root {
+            --excel-green: #217346;
+            --light-grey: #f3f2f1;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light-grey);
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .game-container {
+            background: white;
+            width: 100%;
+            max-width: 500px;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border-top: 10px solid var(--excel-green);
+            text-align: center;
+
+            background-image: url('./logo-quijarro.jpg');
+            background-position: top 10px left 10px;
+            background-repeat: no-repeat;
+            background-size: 90px 90px;
+        }
+
+        .header-info {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .timer {
+            color: #d83b01;
+        }
+
+        .emoji-icon {
+            font-size: 50px;
+            margin: 20px 0;
+        }
+
+        .question {
+            font-size: 1.2rem;
+            margin-bottom: 25px;
+            color: #201f1e;
+            height: auto;
+        }
+
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        button {
+            padding: 15px;
+            font-size: 1rem;
+            cursor: pointer;
+            border: 2px solid var(--excel-green);
+            background: white;
+            color: var(--excel-green);
+            border-radius: 5px;
+            transition: 0.3s;
+            font-weight: bold;
+        }
+
+        button:hover:not(:disabled) {
+            background: var(--excel-green);
+            color: white;
+        }
+
+        button:active {
+            transform: scale(0.97);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        #feedback {
+            margin-top: 20px;
+            font-weight: bold;
+            height: 25px;
+        }
+
+        .correct {
+            color: #107c10;
+        }
+
+        .wrong {
+            color: #a4262c;
+        }
+
+        input {
+            padding: 12px;
+            width: 90%;
+            margin: 20px 0;
+            font-size: 1rem;
+            border: 2px solid #ccc;
+            border-radius: 5px;
+        }
+
+        @media (max-width: 600px) {
+
+            body {
+                padding: 10px;
+            }
+
+            .game-container {
+                padding: 20px;
+                border-top: 6px solid var(--excel-green);
+
+                background-size: 80px 80px;
+            }
+
+            .question {
+                font-size: 1rem;
+            }
+
+            button {
+                font-size: 0.95rem;
+                padding: 12px;
+            }
+
+            .emoji-icon {
+                font-size: 40px;
+            }
+
+            .header-info {
+                flex-direction: column;
+                gap: 5px;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- PANTALLA INICIAL -->
+    <div id="inicio" class="game-container">
+
+        <h2>Evaluación de Excel</h2>
+
+        <p>
+            CEA Puerto Quijarro
+        </p>
+
+        <input type="text" id="nombreEstudiante" placeholder="Ingrese su nombre completo">
+
+        <button onclick="verificarAcceso()">
+            Comenzar Evaluación
+        </button>
+
+    </div>
+
+    <!-- JUEGO -->
+    <div class="game-container" id="game-box" style="display:none;">
+
+        <div class="header-info">
+            <div>
+                Nota: <span id="nota">0</span>/100
+            </div>
+
+            <div class="timer">
+                Tiempo: <span id="tiempo">70</span>s
+            </div>
+        </div>
+
+        <div class="emoji-icon" id="icon">📊</div>
+
+        <div class="question" id="pregunta">
+            Cargando desafío...
+        </div>
+
+        <div class="btn-group">
+            <button id="btn0" onclick="verificar(0)">
+                Opción A
+            </button>
+
+            <button id="btn1" onclick="verificar(1)">
+                Opción B
+            </button>
+        </div>
+
+        <div id="feedback"></div>
+
+        <div style="margin-top: 30px; font-size: 0.9rem; color: #555;">
+            CEA Puerto Quijarro - 2026
+        </div>
+
+    </div>
+
+    <script>
+
+        const bancoPreguntas = [
+
+            {
+                q: "¿Cual es el nombre que reciben los archivos de Excel?",
+                opts: ["Libros", "Hojas"],
+                ans: 0,
+                icon: "📘"
+            },
+
+            {
+                q: "¿Cómo se llama la unión de una columna y una fila?",
+                opts: ["Renglón", "Celda"],
+                ans: 1,
+                icon: "🧱"
+            },
+
+            {
+                q: "Si estoy en la Columna B y Fila 5, ¿cómo se llama la celda?",
+                opts: ["5B", "B5"],
+                ans: 1,
+                icon: "📍"
+            },
+
+            {
+                q: "¿En Excel, las columnas se identifican mediante...?",
+                opts: ["Letras", "Números"],
+                ans: 0,
+                icon: "🔠"
+            },
+
+            {
+                q: "¿En Excel, las Filas se identifican mediante...?",
+                opts: ["Letras", "Números"],
+                ans: 1,
+                icon: "🔢"
+            },
+
+            {
+                q: "¿Que es Excel?",
+                opts: ["Hoja de cálculo", "Hoja de texto"],
+                ans: 0,
+                icon: "📊"
+            },
+
+            {
+                q: "¿Cuál es un ejemplo de rango?",
+                opts: ["B5:B10", "A1 - C3"],
+                ans: 0,
+                icon: "📋"
+            },
+
+            {
+                q: "¿Forma de ingresar o abrir Excel?",
+                opts: ["Con el botón de buscar", "Ingresando al navegador"],
+                ans: 0,
+                icon: "🖥️"
+            },
+
+            {
+                q: "¿Como esta formado una celda en Excel?",
+                opts: [
+                    "Esta formado por la union de una columna y una fila",
+                    "Esta formado por la union de una fila y otra fila"
+                ],
+                ans: 0,
+                icon: "✅"
+            },
+
+            {
+                q: "¿Que es una hoja de Excel?",
+                opts: [
+                    "Es un libro de Excel",
+                    "Es una página dentro de un libro de Excel"
+                ],
+                ans: 1,
+                icon: "📄"
+            },
+            {
+                q: "¿Que simbolo debe preceder siempre a culaquier operacion o formula?",
+                opts: [
+                    "El signo de igualdad (=)",
+                    "El signo de multiplicación (*)"
+                ],
+                ans: 1,
+                icon: "📄"
+            },
+            {
+                q: "¿Si el Jefe pide colocar una columna en la mitad de una tabla que tiene 4 columnas. que accion se debe realizar?",
+                opts: [
+                    "Click isquierdo en la columna y seleccionar insertar",
+                    "Click derecho en la columna y seleccionar 'Insertar'"
+                ],
+                ans: 0,
+                icon: "📄"
+            },
+            {
+                q: "¿Si se desea saber el total de una compra que se realizo el dia de hoy, que accion tomar?",
+                opts: [
+                    "= celda mas celda mas celda ...",
+                    " celda mas celda mas celda ..."
+                ],
+                ans: 0,
+                icon: "📄" 
+            },
+            {
+                q: "¿Para que sirve el formato condicional en Excel?",
+                opts: [
+                    " Para sumar celdas",
+                    "Para la verificacion de datos"
+                ],
+                ans: 0,
+                icon: "📄" 
+            }
+
+        ];
+
+        let indice = 0;
+        let nota = 0;
+        let respuestasCorrectas = 0;
+        let tiempoRestante = 70;
+        let timer;
+        let estudiante = "";
+
+        // MEZCLAR PREGUNTAS
+        mezclarArray(bancoPreguntas);
+
+        // MEZCLAR OPCIONES
+        bancoPreguntas.forEach(p => mezclarOpciones(p));
+
+        // VERIFICAR SI YA RINDIÓ
+        function verificarAcceso() {
+
+            estudiante = document
+                .getElementById("nombreEstudiante")
+                .value
+                .trim();
+
+            if (estudiante === "") {
+                alert("Ingrese su nombre");
+                return;
+            }
+
+            // VALIDAR SI YA EXISTE
+            if (localStorage.getItem(estudiante)) {
+
+                document.getElementById("inicio").innerHTML = `
+                    <h2 style="color:red;">
+                        ⚠️ Evaluación ya realizada
+                    </h2>
+
+                    <p>
+                        El estudiante <b>${estudiante}</b>
+                        ya completó esta evaluación.
+                    </p>
+                `;
+
+                return;
+            }
+
+            // MOSTRAR EXAMEN
+            document.getElementById("inicio").style.display = "none";
+            document.getElementById("game-box").style.display = "block";
+
+            actualizarPantalla();
+            iniciarReloj();
+        }
+
+        // RELOJ
+        function iniciarReloj() {
+
+            timer = setInterval(() => {
+
+                tiempoRestante--;
+
+                document.getElementById("tiempo").innerText = tiempoRestante;
+
+                if (tiempoRestante <= 0) {
+
+                    finalizarJuego("⏱️ Tiempo Finalizado");
+
+                }
+
+            }, 1000);
+        }
+
+        // MOSTRAR PREGUNTA
+        function actualizarPantalla() {
+
+            if (indice >= bancoPreguntas.length) {
+
+                finalizarJuego("🎓 Evaluación Finalizada");
+
+                return;
+            }
+
+            const actual = bancoPreguntas[indice];
+
+            document.getElementById("pregunta").innerText = actual.q;
+
+            document.getElementById("btn0").innerText = actual.opts[0];
+
+            document.getElementById("btn1").innerText = actual.opts[1];
+
+            document.getElementById("icon").innerText = actual.icon;
+
+            document.getElementById("feedback").innerText = "";
+        }
+
+        // VALIDAR RESPUESTA
+        function verificar(opcion) {
+
+            const botones = document.querySelectorAll("button");
+
+            botones.forEach(b => b.disabled = true);
+
+            if (opcion === bancoPreguntas[indice].ans) {
+
+                respuestasCorrectas++;
+
+                nota = Math.round(
+                    (respuestasCorrectas / bancoPreguntas.length) * 100
+                );
+
+                document.getElementById("nota").innerText = nota;
+
+                document.getElementById("feedback").innerText = "¡Correcto! 🎯";
+
+                document.getElementById("feedback").className = "correct";
+
+            } else {
+
+                document.getElementById("feedback").innerText = "Incorrecto 💡";
+
+                document.getElementById("feedback").className = "wrong";
+            }
+
+            setTimeout(() => {
+
+                indice++;
+
+                botones.forEach(b => b.disabled = false);
+
+                actualizarPantalla();
+
+            }, 1500);
+        }
+
+        // MEZCLAR ARRAY
+        function mezclarArray(array) {
+
+            for (let i = array.length - 1; i > 0; i--) {
+
+                let j = Math.floor(Math.random() * (i + 1));
+
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        // MEZCLAR OPCIONES
+        function mezclarOpciones(pregunta) {
+
+            let opciones = pregunta.opts.map((texto, i) => {
+
+                return {
+                    texto: texto,
+                    esCorrecta: i === pregunta.ans
+                };
+
+            });
+
+            for (let i = opciones.length - 1; i > 0; i--) {
+
+                let j = Math.floor(Math.random() * (i + 1));
+
+                [opciones[i], opciones[j]] =
+                    [opciones[j], opciones[i]];
+            }
+
+            pregunta.opts = opciones.map(o => o.texto);
+
+            pregunta.ans =
+                opciones.findIndex(o => o.esCorrecta);
+        }
+
+        // FINALIZAR
+        function finalizarJuego(mensaje) {
+
+            clearInterval(timer);
+
+            // GUARDAR QUE YA RINDIÓ
+            localStorage.setItem(estudiante, nota);
+
+            document.getElementById("game-box").innerHTML = `
+
+                <h2 style="color:var(--excel-green)">
+                    ${mensaje}
+                </h2>
+
+                <div style="font-size:3rem; margin:20px;">
+                    🎓
+                </div>
+
+                <h3>
+                    ${estudiante}, tu nota final es:
+                    ${nota}/100
+                </h3>
+
+                <p>
+                    Evaluación registrada correctamente.
+                </p>
+
+            `;
+        }
+
+    </script>
+
+</body>
+
+</html>
